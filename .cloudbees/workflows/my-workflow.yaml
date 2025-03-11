@@ -3,6 +3,26 @@ kind: workflow
 name: My workflow
 on:
   workflow_dispatch:
+    inputs:
+      stringParam:
+        type: string
+        default: defaultValueStringParam
+        required: true
+      choiceParam:
+        type: choice
+        options:
+          - opt1default
+          - opt2
+        default: opt1default
+        required: true
+      booleanParam:
+        type: boolean
+        default: false
+        required: true
+      numberParam:
+        type: number
+        default: 1
+        required: true
 jobs:
   build:
     steps:
@@ -10,14 +30,7 @@ jobs:
         uses: docker://golang:1.20.3-alpine3.17
         shell: sh
         run: |
-          echo "hello world"
-    needs:
-      - approval
-  approval:
-    timeout-minutes: 4320
-    delegates: cloudbees-io/manual-approval/custom-job.yml@v1
-
-    with:
-      approvers: ff67605a-b3ca-11ef-9745-42010a83ae7d
-      disallowLaunchByUser: false
-      instructions: some
+          echo "stringParam is '\${{ inputs.stringParam}}'"
+          echo "choiceParam is '\${{ inputs.choiceParam}}'"
+          echo "booleanParam is '\${{ inputs.booleanParam}}'"
+          echo "numberParam is '\${{ inputs.numberParam}}'"
