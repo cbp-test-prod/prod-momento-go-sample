@@ -1,0 +1,51 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: main-test-workflow
+on:
+  schedule:
+    - cron: 0 0 * * 2,4
+    - cron: 0 0 * * 1,3
+  workflow_dispatch:
+    inputs:
+      Environment:
+        type: choice
+        options:
+          - PREPROD
+          - PROD
+          - QA
+        default: QA
+        required: true
+      TestTag:
+        type: choice
+        options:
+          - "@Login"
+          - "@SummaryWidget"
+          - "@ServiceNow"
+        default: "@SummaryWidget"
+        required: true
+permissions:
+  scm-token-own: read
+  scm-token-org: read
+jobs:
+  test:
+    steps:
+      - name: Set the Environment based on the event's
+        run: |
+          HOUR=$(date +%H)
+          MINUTE=$(date +%M)
+          DAY_OF_WEEK=$(date +%u) 
+          if [ '${{ cloudbees.event_name }}' != 'schedule' ]; then
+              echo ${{ inputs.Environment }} > $CLOUDBEES_OUTPUTS/env
+          elif [ '${{ cloudbees.event_name }}' = 'schedule' ]; then
+              if { [ "$DAY_OF_WEEK" = "2" ] || [ "$DAY_OF_WEEK" = "4" ]; } && [ "$MINUTE" -ge 0 ] && [ "$MINUTE" -le 5 ]; then
+                  echo "PROD" > $CLOUDBEES_OUTPUTS/env
+              else
+                  echo "QA" > $CLOUDBEES_OUTPUTS/env
+              fi
+          fi
+         
+        uses: docker://alpine:3.19
+        id: detect-env
+        shell: bash
+    outputs:
+      output1: ${{ steps.detect-env.outputs.env }}
