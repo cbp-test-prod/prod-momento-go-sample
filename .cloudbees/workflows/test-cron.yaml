@@ -47,5 +47,11 @@ jobs:
         uses: docker://alpine:3.19
         id: detect-env
         shell: sh
+
+      - name: Output the value
+        uses: docker://alpine:3.19
+        run: |
+          echo ${{ steps.detect-env.outputs.env }}
+
     outputs:
       output1: ${{ steps.detect-env.outputs.env }}
