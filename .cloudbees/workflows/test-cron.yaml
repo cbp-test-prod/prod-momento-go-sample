@@ -46,6 +46,6 @@ jobs:
          
         uses: docker://alpine:3.19
         id: detect-env
-        shell: bash
+        shell: sh
     outputs:
       output1: ${{ steps.detect-env.outputs.env }}
