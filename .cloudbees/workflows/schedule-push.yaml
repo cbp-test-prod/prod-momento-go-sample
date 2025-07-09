@@ -42,15 +42,6 @@ jobs:
 
   test:
     steps:
-      - name: Set the Environment based on the event's - WD
-        id: detect-env-1
-        if: ${{ cloudbees.event_name == 'workflow_dispatch' }}
-        uses: docker://alpine:3.19
-        shell: sh
-        run: |
-              echo ${{ cloudbees.event_name }}
-              echo ${{ inputs.Environment }} > $CLOUDBEES_OUTPUTS/env
-              echo ${{ inputs.TestTag }} > $CLOUDBEES_OUTPUTS/test_tag
 
       - name: Set the Environment based on the event's - push
         id: detect-env-2
@@ -68,6 +59,17 @@ jobs:
                   echo "@QACASE" > $CLOUDBEES_OUTPUTS/test_tag
               fi
 
+      - name: Set the Environment based on the event's - WD
+        id: detect-env-1
+        if: ${{ cloudbees.event_name == 'workflow_dispatch' }}
+        uses: docker://alpine:3.19
+        shell: sh
+        run: |
+              echo ${{ cloudbees.event_name }}
+              echo ${{ inputs.Environment }} > $CLOUDBEES_OUTPUTS/env
+              echo ${{ inputs.TestTag }} > $CLOUDBEES_OUTPUTS/test_tag
+
+     
            
 
           
