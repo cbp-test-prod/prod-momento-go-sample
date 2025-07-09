@@ -1,18 +1,64 @@
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: My workflow
-
+name: main-test-workflow
 on:
+  schedule:
+    - cron: 0 2 * * 1-5 # Every weekday at 
+    - cron: 0 5 * * 1-5 # Every weekday at 2:00 PM
+  push:
   workflow_dispatch:
-
+    inputs:
+      Environment:
+        type: choice
+        options:
+          - PREPROD
+          - PROD
+          - QA
+        default: QA
+        required: true
+      TestTag:
+        type: choice
+        options:
+          - '@Applications'
+          - '@Releases'
+          - '@WorkflowTest'
+          - '@Evidence'
+          - '@Artifacts'
+          - '@ArtifactLabels'
+          - '@ManualArtifacts'
+          - '@WorkflowDispatchAction'
+          - '@ReusableWorkflows'
+          - '@CdroRegression'
+        default: '@CdroRegression'
+        required: true
+permissions:
+  scm-token-own: read
+  scm-token-org: read
 jobs:
-  build:
+
+
+  test:
     steps:
-      - name: Say hello
-        uses: docker://golang:1.20.3-alpine3.17
+      - name: Set the Environment based on the event's
+        id: detect-env
+        uses: docker://alpine:3.19
         shell: sh
         run: |
-          echo "hello world"
-          echo ${{ vars.VAR_PROP1 }}
-          echo ${{ vars.VAR_PROP2 }}
-          echo ${{ vars.VAR_PROP3 }}
+          
+          HOUR=$(date +%H)
+          MINUTE=$(date +%M)
+          DAY_OF_WEEK=$(date +%u) 
+          if [ '${{ cloudbees.event_name }}' != 'schedule' ]; then
+              echo ${{ inputs.Environment }} > $CLOUDBEES_OUTPUTS/env
+          elif [ '${{ cloudbees.event_name }}' = 'schedule' ]; then
+              if [ "$HOUR" -ge 5 ]; then
+                  echo "PROD" > $CLOUDBEES_OUTPUTS/env
+              else
+                  echo "QA" > $CLOUDBEES_OUTPUTS/env
+              fi
+          fi
+      - name: Echoed the output
+        uses: docker://alpine:3.19
+        shell: sh
+        run: |
+         echo ${{ steps.detect-env.outputs.env }}
