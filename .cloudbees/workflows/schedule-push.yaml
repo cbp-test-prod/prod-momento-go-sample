@@ -3,15 +3,69 @@ kind: workflow
 name: My workflow
 
 on:
+  schedule:
+    - cron: 0 2 * * 1-5 # Every weekday at 
+    - cron: 0 5 * * 1-5 # Every weekday at 2:00 PM
   push:
-    branches:
-      - '**'
-
+  workflow_dispatch:
+    inputs:
+      Environment:
+        type: choice
+        options:
+          - PREPROD
+          - PROD
+          - QA
+        default: QA
+        required: true
+      TestTag:
+        type: choice
+        options:
+          - '@Applications'
+          - '@Releases'
+          - '@WorkflowTest'
+          - '@Evidence'
+          - '@Artifacts'
+          - '@ArtifactLabels'
+          - '@ManualArtifacts'
+          - '@WorkflowDispatchAction'
+          - '@ReusableWorkflows'
+          - '@CdroRegression'
+        default: '@CdroRegression'
+        required: true
+permissions:
+  scm-token-own: read
+  scm-token-org: read
 jobs:
-  build:
+
+
+  test:
     steps:
-      - name: Say hello
-        uses: docker://golang:1.20.3-alpine3.17
+      - name: Set the Environment based on the event's - dispatch
+        id: detect-env
+        if: ${{ cloudbees.event_name == 'workflow_dispatch' }}
+        uses: docker://alpine:3.19
         shell: sh
         run: |
-          echo "hello world"
+           echo ${{ cloudbees.event_name }}
+           if [ '${{ cloudbees.event_name }}' = 'schedule' ]; then  
+              echo ${{ inputs.Environment }} > $CLOUDBEES_OUTPUTS/env
+              echo ${{ inputs.TestTag }} > $CLOUDBEES_OUTPUTS/test_tag
+           elif [ '${{ cloudbees.event_name }}' = 'push' ]; then
+              HOUR=$(date +%H)
+              if [ "$HOUR" -ge 5 ]; then
+                  echo "PROD" > $CLOUDBEES_OUTPUTS/env
+                  echo "@PRODCASE" > $CLOUDBEES_OUTPUTS/test_tag
+              else
+                  echo "QA" > $CLOUDBEES_OUTPUTS/env
+                  echo "@QACASE" > $CLOUDBEES_OUTPUTS/test_tag
+              fi
+
+           fi
+
+          
+      - name: Echoed the output
+        uses: docker://alpine:3.19
+        shell: sh
+        run: |
+         echo ${{ steps.detect-env.outputs.env }}
+         echo ${{ steps.detect-env.outputs.test_tag }}
