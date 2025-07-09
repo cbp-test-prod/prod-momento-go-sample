@@ -10,30 +10,30 @@ on:
     branches:
       - '*'
   workflow_dispatch:
-    inputs:
-      Environment:
-        type: choice
-        options:
-          - PREPROD
-          - PROD
-          - QA
-        default: QA
-        required: true
-      TestTag:
-        type: choice
-        options:
-          - '@Applications'
-          - '@Releases'
-          - '@WorkflowTest'
-          - '@Evidence'
-          - '@Artifacts'
-          - '@ArtifactLabels'
-          - '@ManualArtifacts'
-          - '@WorkflowDispatchAction'
-          - '@ReusableWorkflows'
-          - '@CdroRegression'
-        default: '@CdroRegression'
-        required: true
+inputs:
+  Environment:
+    type: choice
+    options:
+      - PREPROD
+      - PROD
+      - QA
+    default: QA
+    required: true
+  TestTag:
+    type: choice
+    options:
+      - '@Applications'
+      - '@Releases'
+      - '@WorkflowTest'
+      - '@Evidence'
+      - '@Artifacts'
+      - '@ArtifactLabels'
+      - '@ManualArtifacts'
+      - '@WorkflowDispatchAction'
+      - '@ReusableWorkflows'
+      - '@CdroRegression'
+    default: '@CdroRegression'
+    required: true
 
 permissions:
   scm-token-own: read
