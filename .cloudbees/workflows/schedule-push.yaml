@@ -42,16 +42,23 @@ jobs:
 
   test:
     steps:
-      - name: Set the Environment based on the event's - dispatch
-        id: detect-env
+      - name: Set the Environment based on the event's - WD
+        id: detect-env-1
+        if: ${{ cloudbees.event_name == 'workflow_dispatch' }}
         uses: docker://alpine:3.19
         shell: sh
         run: |
-           echo ${{ cloudbees.event_name }}
-           if [ '${{ cloudbees.event_name }}' = 'workflow_dispatch' ]; then  
+              echo ${{ cloudbees.event_name }}
               echo ${{ inputs.Environment }} > $CLOUDBEES_OUTPUTS/env
               echo ${{ inputs.TestTag }} > $CLOUDBEES_OUTPUTS/test_tag
-           elif [ '${{ cloudbees.event_name }}' = 'push' ]; then
+
+      - name: Set the Environment based on the event's - push
+        id: detect-env-2
+        if: ${{ cloudbees.event_name == 'push' }}
+        uses: docker://alpine:3.19
+        shell: sh
+        run: |        
+          
               HOUR=$(date +%H)
               if [ "$HOUR" -ge 5 ]; then
                   echo "PROD" > $CLOUDBEES_OUTPUTS/env
@@ -61,12 +68,12 @@ jobs:
                   echo "@QACASE" > $CLOUDBEES_OUTPUTS/test_tag
               fi
 
-           fi
+           
 
           
       - name: Echoed the output
         uses: docker://alpine:3.19
         shell: sh
         run: |
-         echo ${{ steps.detect-env.outputs.env }}
-         echo ${{ steps.detect-env.outputs.test_tag }}
+         echo ${{ steps.detect-env-1.outputs.env }} || ${{ steps.detect-env-2.outputs.env }}
+         echo ${{ steps.detect-env-1.outputs.test_tag }} || ${{ steps.detect-env-2.outputs.test_tag }}
