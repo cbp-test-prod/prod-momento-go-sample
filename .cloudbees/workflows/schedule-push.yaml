@@ -4,8 +4,8 @@ name: My workflow
 
 on:
   schedule:
-    - cron: 0 2 * * 1-5 # Every weekday at 
-    - cron: 0 5 * * 1-5 # Every weekday at 2:00 PM
+    - cron: '0 2 * * 1-5' # Every weekday at 2:00 AM
+    - cron: '0 5 * * 1-5' # Every weekday at 5:00 AM
   push:
     branches:
       - '*'
@@ -34,55 +34,44 @@ on:
           - '@CdroRegression'
         default: '@CdroRegression'
         required: true
+
 permissions:
   scm-token-own: read
   scm-token-org: read
+
 jobs:
-
-
   test:
     steps:
-
-      - name: Set the Environment based on the event's - push
-        id: detect-env-2
-        if: ${{ cloudbees.event_name == 'push' }}
-        uses: docker://alpine:3.19
-        shell: sh
-        run: |        
-          
-              HOUR=$(date +%H)
-              if [ "$HOUR" -ge 5 ]; then
-                  echo "PROD" > $CLOUDBEES_OUTPUTS/env
-                  echo "@PRODCASE" > $CLOUDBEES_OUTPUTS/test_tag
-              else
-                  echo "QA" > $CLOUDBEES_OUTPUTS/env
-                  echo "@QACASE" > $CLOUDBEES_OUTPUTS/test_tag
-              fi
-
-      - name: Set the Environment based on the event's - WD
+      - name: Set the Environment based on the event - workflow_dispatch
         id: detect-env-1
         if: ${{ cloudbees.event_name == 'workflow_dispatch' }}
         uses: docker://alpine:3.19
         shell: sh
         run: |
-              echo ${{ cloudbees.event_name }}
-              echo ${{ inputs.Environment }} > $CLOUDBEES_OUTPUTS/env
-              echo ${{ inputs.TestTag }} > $CLOUDBEES_OUTPUTS/test_tag
-          
-      - name: Echoed the output
+          echo "${{ inputs.Environment }}" > $CLOUDBEES_OUTPUTS/env
+          echo "${{ inputs.TestTag }}" > $CLOUDBEES_OUTPUTS/test_tag
+
+      - name: Set the Environment based on the event - push
+        id: detect-env-2
+        if: ${{ cloudbees.event_name == 'push' }}
         uses: docker://alpine:3.19
         shell: sh
         run: |
-          ENV_VAR="${{ steps.detect-env-2.outputs.env }}"
-          TEST_TAG_VAR="${{ steps.detect-env-2.outputs.test_tag }}"
-          
-          if [ -z "$ENV_VAR" ]; then
-            ENV_VAR="${{ steps.detect-env-1.outputs.env }}"
-          fi
-          
-          if [ -z "$TEST_TAG_VAR" ]; then
-            TEST_TAG_VAR="${{ steps.detect-env-1.outputs.test_tag }}"
+          HOUR=$(date +%H)
+          if [ "$HOUR" -ge 5 ]; then
+              echo "PROD" > $CLOUDBEES_OUTPUTS/env
+              echo "@PRODCASE" > $CLOUDBEES_OUTPUTS/test_tag
+          else
+              echo "QA" > $CLOUDBEES_OUTPUTS/env
+              echo "@QACASE" > $CLOUDBEES_OUTPUTS/test_tag
           fi
 
+      - name: Echo the output
+        uses: docker://alpine:3.19
+        shell: sh
+        run: |
+          ENV_VAR="${{ steps.detect-env-1.outputs.env || steps.detect-env-2.outputs.env }}"
+          TEST_TAG_VAR="${{ steps.detect-env-1.outputs.test_tag || steps.detect-env-2.outputs.test_tag }}"
+          
           echo "Environment: $ENV_VAR"
           echo "Test Tag: $TEST_TAG_VAR"
