@@ -68,14 +68,21 @@ jobs:
               echo ${{ cloudbees.event_name }}
               echo ${{ inputs.Environment }} > $CLOUDBEES_OUTPUTS/env
               echo ${{ inputs.TestTag }} > $CLOUDBEES_OUTPUTS/test_tag
-
-     
-           
-
           
       - name: Echoed the output
         uses: docker://alpine:3.19
         shell: sh
         run: |
-         echo ${{ steps.detect-env-1.outputs.env }} || ${{ steps.detect-env-2.outputs.env }}
-         echo ${{ steps.detect-env-1.outputs.test_tag }} || ${{ steps.detect-env-2.outputs.test_tag }}
+          ENV_VAR="${{ steps.detect-env-1.outputs.env }}"
+          TEST_TAG_VAR="${{ steps.detect-env-1.outputs.test_tag }}"
+          
+          if [ -z "$ENV_VAR" ]; then
+            ENV_VAR="${{ steps.detect-env-2.outputs.env }}"
+          fi
+          
+          if [ -z "$TEST_TAG_VAR" ]; then
+            TEST_TAG_VAR="${{ steps.detect-env-2.outputs.test_tag }}"
+          fi
+
+          echo "Environment: $ENV_VAR"
+          echo "Test Tag: $TEST_TAG_VAR"
