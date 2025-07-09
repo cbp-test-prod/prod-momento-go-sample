@@ -7,6 +7,8 @@ on:
     - cron: 0 2 * * 1-5 # Every weekday at 
     - cron: 0 5 * * 1-5 # Every weekday at 2:00 PM
   push:
+    branches:
+      - '*'
   workflow_dispatch:
     inputs:
       Environment:
@@ -42,12 +44,11 @@ jobs:
     steps:
       - name: Set the Environment based on the event's - dispatch
         id: detect-env
-        if: ${{ cloudbees.event_name == 'workflow_dispatch' }}
         uses: docker://alpine:3.19
         shell: sh
         run: |
            echo ${{ cloudbees.event_name }}
-           if [ '${{ cloudbees.event_name }}' = 'schedule' ]; then  
+           if [ '${{ cloudbees.event_name }}' = 'workflow_dispatch' ]; then  
               echo ${{ inputs.Environment }} > $CLOUDBEES_OUTPUTS/env
               echo ${{ inputs.TestTag }} > $CLOUDBEES_OUTPUTS/test_tag
            elif [ '${{ cloudbees.event_name }}' = 'push' ]; then
