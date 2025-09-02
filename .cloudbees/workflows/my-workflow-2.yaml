@@ -15,7 +15,18 @@ jobs:
           echo "Hello world" > check.txt
           cat check.txt
           ls -al
-          
+
+      - uses: docker://golang:1.20.3-alpine3.17
+        name: check the file
+        shell: sh
+        run: |
+          echo $PWD
+          ls -al
+          cat check.txt
+          ls -al
+  
+  test:
+    steps:
       - uses: docker://golang:1.20.3-alpine3.17
         name: check the file
         shell: sh
