@@ -26,6 +26,7 @@ jobs:
           ls -al
   
   test:
+    needs: build
     steps:
       - uses: docker://golang:1.20.3-alpine3.17
         name: check the file on other job
